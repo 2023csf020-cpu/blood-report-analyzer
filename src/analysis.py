@@ -10,6 +10,13 @@ from prompts import INSIGHTS_SYSTEM_PROMPT
 BASE_URL = os.environ.get("OPENROUTER_BASE_URL") or os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 MODEL = os.environ.get("OPENROUTER_MODEL") or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 
+# Clean strings to prevent errors from trailing whitespaces, newlines, or quotes
+if BASE_URL:
+    BASE_URL = BASE_URL.strip().strip("'\"")
+if MODEL:
+    MODEL = MODEL.strip().strip("'\"")
+
+
 
 def compute_health_score(data: dict) -> dict:
     """Compute a health score (0-100) based on the proportion of normal flags."""

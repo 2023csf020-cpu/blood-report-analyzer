@@ -24,6 +24,15 @@ CORS(app)
 BASE_URL = os.environ.get("OPENROUTER_BASE_URL") or os.environ.get("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 MODEL = os.environ.get("OPENROUTER_MODEL") or os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 API_KEY = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("GROQ_API_KEY")
+
+# Clean strings to prevent errors from trailing whitespaces, newlines, or quotes
+if BASE_URL:
+    BASE_URL = BASE_URL.strip().strip("'\"")
+if MODEL:
+    MODEL = MODEL.strip().strip("'\"")
+if API_KEY:
+    API_KEY = API_KEY.strip().strip("'\"")
+
 SAMPLES_DIR   = os.path.join(os.path.dirname(__file__), "..", "samples")
 
 def get_client():
