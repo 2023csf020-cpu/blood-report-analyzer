@@ -49,6 +49,30 @@ def health():
     provider = "openrouter" if "openrouter" in BASE_URL.lower() else ("groq" if "groq" in BASE_URL.lower() else "openai")
     return jsonify({"status": "ok", "model": MODEL, "backend": provider})
 
+@app.route("/api/test-connection")
+def test_connection():
+    import requests
+    results = {}
+    try:
+        r = requests.get("https://openrouter.ai/api/v1/models", timeout=5)
+        results["dns_and_connectivity"] = f"OK (Status: {r.status_code})"
+    except Exception as e:
+        results["dns_and_connectivity"] = f"FAILED: {e}"
+    try:
+        headers = {"Authorization": f"Bearer {API_KEY}"}
+        r = requests.get("https://openrouter.ai/api/v1/auth/key", headers=headers, timeout=5)
+        results["auth_test"] = f"Status: {r.status_code}, Body: {r.text}"
+    except Exception as e:
+        results["auth_test"] = f"FAILED: {e}"
+    results["env_state"] = {
+        "BASE_URL": BASE_URL,
+        "MODEL": MODEL,
+        "API_KEY_EXISTS": bool(API_KEY),
+        "API_KEY_LENGTH": len(API_KEY) if API_KEY else 0,
+        "API_KEY_PREFIX": API_KEY[:10] if API_KEY and len(API_KEY) >= 10 else (API_KEY or None)
+    }
+    return jsonify(results)
+
 
 # --- Profile Endpoints ---
 
