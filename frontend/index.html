@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BloodIQ — AI Blood Report Analyzer</title>
+  <meta name="description" content="Upload your blood report PDF and get instant AI-powered analysis, plain-English explanations, and a personalized health score." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Chart.js CDN for trends analysis -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+  <!-- ===== SIDEBAR / HISTORY DRAWER ===== -->
+  <aside class="sidebar-drawer glass" id="sidebar-drawer">
+    <div class="sidebar-header">
+      <h3 class="sidebar-title">Report History</h3>
+      <button class="close-sidebar-btn" onclick="toggleSidebar(false)">✕</button>
+    </div>
+    <div class="sidebar-content" id="sidebar-history-list">
+      <p class="sidebar-empty">No reports analyzed yet.</p>
+    </div>
+  </aside>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🩸</span>
+        <span class="logo-text">Blood<span class="logo-accent">IQ</span></span>
+      </div>
+      <nav class="nav-links">
+        <!-- Profile Selection dropdown -->
+        <div class="profile-container">
+          <select id="profile-select" class="profile-select-dropdown glass">
+            <!-- Dynamically populated -->
+          </select>
+          <button id="add-profile-btn" class="sidebar-toggle-btn" onclick="toggleProfileModal(true)">
+            ＋ Profile
+          </button>
+        </div>
+        
+        <button class="sidebar-toggle-btn" onclick="toggleSidebar(true)">
+          📜 History
+        </button>
+        <a href="#" class="nav-link" id="nav-upload" onclick="showScreen('upload')">Upload</a>
+        <a href="#" class="nav-link" id="nav-results" onclick="showScreen('results')" style="display:none">Results</a>
+        <a href="#" class="nav-link" id="nav-trends" onclick="showScreen('trends')">Trends</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== HERO / UPLOAD SCREEN ===== -->
+  <main id="screen-upload" class="screen screen-upload active">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        AI-Powered Analysis
+      </div>
+      <h1 class="hero-title">
+        Understand Your<br/>
+        <span class="gradient-text">Blood Report</span><br/>
+        Instantly
+      </h1>
+      <p class="hero-subtitle">
+        Upload any blood test PDF. Our AI extracts every result, flags abnormals, 
+        computes your health score, and lets you ask questions in plain English.
+      </p>
+    </section>
+
+    <!-- Upload Card -->
+    <section class="upload-section">
+      <div class="upload-card glass" id="upload-zone">
+        <input type="file" id="file-input" accept=".pdf" hidden />
+        <div class="upload-icon" id="upload-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17,8 12,3 7,8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <h2 class="upload-title">Drop your PDF here</h2>
+        <p class="upload-sub">or <button class="link-btn" id="browse-btn">browse to upload</button></p>
+        <p class="upload-hint">Supports any blood test PDF from any lab</p>
+
+        <!-- File selected state (hidden by default) -->
+        <div class="file-preview" id="file-preview" style="display:none">
+          <div class="file-preview-icon">📄</div>
+          <div class="file-preview-info">
+            <span class="file-preview-name" id="file-name-display">report.pdf</span>
+            <span class="file-preview-size" id="file-size-display">0 KB</span>
+          </div>
+          <button class="clear-file-btn" id="clear-file-btn" title="Remove file">✕</button>
+        </div>
+      </div>
+
+      <button class="analyze-btn" id="analyze-btn" disabled>
+        <span class="analyze-btn-text">Analyze Report</span>
+        <span class="analyze-btn-arrow">→</span>
+      </button>
+
+      <!-- Sample files suggestion -->
+      <p class="sample-hint">
+        Don't have a report handy? 
+        <button class="link-btn" id="use-sample-btn">Use a sample PDF</button>
+      </p>
+    </section>
+
+    <!-- Features grid -->
+    <section class="features">
+      <div class="feature-card glass">
+        <div class="feature-icon">🔬</div>
+        <h3>Complete Extraction</h3>
+        <p>Every test value, unit, and reference range parsed — even from multi-panel reports with mixed layouts.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">📊</div>
+        <h3>Health Score</h3>
+        <p>Instant 0–100 health score based on your flagged results, with per-panel breakdowns.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">💬</div>
+        <h3>AI Q&amp;A</h3>
+        <p>Ask anything about your report in plain English. Get clear explanations without medical jargon.</p>
+      </div>
+      <div class="feature-card glass">
+        <div class="feature-icon">🔒</div>
+        <h3>Private &amp; Secure</h3>
+        <p>Your PDF is processed locally and never stored. Each session is completely isolated.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== LOADING SCREEN ===== -->
+  <div id="screen-loading" class="screen screen-loading">
+    <div class="loading-card glass">
+      <div class="loading-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+      </div>
+      <h2 class="loading-title">Analyzing your report…</h2>
+      <div class="loading-steps">
+        <div class="loading-step active" id="step-1">
+          <div class="step-dot"></div>
+          <span>Extracting text from PDF</span>
+        </div>
+        <div class="loading-step" id="step-2">
+          <div class="step-dot"></div>
+          <span>AI parsing test results</span>
+        </div>
+        <div class="loading-step" id="step-3">
+          <div class="step-dot"></div>
+          <span>Computing health score</span>
+        </div>
+        <div class="loading-step" id="step-4">
+          <div class="step-dot"></div>
+          <span>Generating insights</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS SCREEN ===== -->
+  <main id="screen-results" class="screen screen-results">
+    <!-- Results Header -->
+    <div class="results-header">
+      <button class="back-btn" onclick="showScreen('upload')">
+        ← Upload New Report
+      </button>
+      <div class="results-actions">
+        <button class="action-btn" id="export-json-btn">
+          <span>⬇</span> Export JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Summary Row -->
+    <div class="summary-row">
+      <!-- Patient Card -->
+      <div class="patient-card glass" id="patient-card">
+        <div class="patient-avatar" id="patient-avatar">?</div>
+        <div class="patient-info">
+          <h2 class="patient-name" id="patient-name">Patient</h2>
+          <div class="patient-meta" id="patient-meta"></div>
+          <div class="patient-lab" id="patient-lab"></div>
+        </div>
+      </div>
+
+      <!-- Health Score Card -->
+      <div class="score-card glass" id="score-card">
+        <div class="score-label">Health Score</div>
+        <div class="score-ring-wrapper">
+          <svg class="score-ring" viewBox="0 0 120 120" width="120" height="120">
+            <circle class="score-ring-bg" cx="60" cy="60" r="52" />
+            <circle class="score-ring-fill" id="score-ring-fill" cx="60" cy="60" r="52"
+              stroke-dasharray="326.7"
+              stroke-dashoffset="326.7"
+            />
+          </svg>
+          <div class="score-number-wrapper">
+            <span class="score-number" id="score-number">--</span>
+            <span class="score-slash">/100</span>
+          </div>
+        </div>
+        <div class="score-breakdown" id="score-breakdown"></div>
+      </div>
+
+      <!-- Overall Insights Card -->
+      <div class="insights-card glass" id="insights-card">
+        <div class="insights-icon">🧠</div>
+        <h3 class="insights-heading">AI Summary</h3>
+        <p class="insights-text" id="insights-text">Generating insights…</p>
+      </div>
+    </div>
+
+    <!-- Personalized Action Plan Section -->
+    <div class="action-plan-section glass" id="action-plan-section">
+      <div class="action-plan-header">
+        <span class="action-plan-icon">🥗</span>
+        <div>
+          <h3 class="action-plan-heading">Personalized Lifestyle &amp; Diet Action Plan</h3>
+          <p class="action-plan-sub">AI-recommended guidelines tailored to your abnormal blood markers</p>
+        </div>
+      </div>
+      <div class="action-plan-checklist" id="action-plan-checklist">
+        <!-- Checklist items dynamically rendered -->
+      </div>
+    </div>
+
+    <!-- Panels Section -->
+    <div class="panels-section" id="panels-section">
+      <!-- Dynamically rendered -->
+    </div>
+
+    <!-- Chat Section -->
+    <div class="chat-section glass" id="chat-section">
+      <div class="chat-header">
+        <span class="chat-header-icon">💬</span>
+        <div>
+          <h3 class="chat-heading">Ask About Your Report</h3>
+          <p class="chat-sub">Get plain-English answers from AI</p>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-bubble assistant-bubble">
+          <div class="bubble-avatar">🤖</div>
+          <div class="bubble-content">Hi! I've reviewed your blood report. Ask me anything — like "What does my hemoglobin level mean?" or "Which results should I discuss with my doctor?"</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" class="chat-input" placeholder="Ask a question about your report…" />
+        <button class="chat-send-btn" id="chat-send-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== TRENDS SCREEN ===== -->
+  <main id="screen-trends" class="screen screen-trends">
+    <div class="trends-header">
+      <h1 class="hero-title" style="text-align: left; padding: 0; margin-bottom: 0.5rem; font-size: 2.2rem;">
+        Historical <span class="gradient-text">Trends</span>
+      </h1>
+      <p class="hero-subtitle" style="text-align: left; max-width: 100%; margin-bottom: 2rem;">
+        Select any numeric biomarker to see variation and trends across your uploaded report history.
+      </p>
+
+      <div class="trends-selector-row">
+        <label for="trends-biomarker-select" class="trends-label">Select Marker:</label>
+        <select id="trends-biomarker-select" class="trends-dropdown glass">
+          <!-- Dynamically populated -->
+          <option value="">-- No numeric data available --</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="trends-container glass">
+      <div class="chart-wrapper">
+        <canvas id="trends-chart"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== ADD PROFILE MODAL ===== -->
+  <div id="profile-modal" class="modal">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Patient Profile</h3>
+        <button class="close-modal-btn" onclick="toggleProfileModal(false)">✕</button>
+      </div>
+      <form id="profile-form">
+        <div class="form-group">
+          <label for="profile-name-input">Full Name</label>
+          <input type="text" id="profile-name-input" class="form-input glass" required placeholder="e.g. Jane Doe" />
+        </div>
+        <div class="form-group">
+          <label for="profile-relation-input">Relationship</label>
+          <select id="profile-relation-input" class="form-input glass">
+            <option value="Self">Self</option>
+            <option value="Parent">Parent</option>
+            <option value="Child">Child</option>
+            <option value="Spouse">Spouse</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <button type="submit" class="modal-submit-btn">Create Profile</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
